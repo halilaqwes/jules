@@ -42,6 +42,49 @@ class OSTools:
             return f"Error writing file: {e}"
 
     @staticmethod
+    async def web_search(query: str) -> str:
+        """Perform a web search using DuckDuckGo and return results."""
+        from ddgs import DDGS
+        import asyncio
+        try:
+            # Run the synchronous DDGS search in an executor to avoid blocking
+            loop = asyncio.get_event_loop()
+            results = await loop.run_in_executor(None, lambda: list(DDGS().text(query, max_results=5)))
+            if not results:
+                return "No search results found."
+
+            formatted = "Search Results:\n\n"
+            for i, res in enumerate(results):
+                formatted += f"{i+1}. {res.get('title', 'No Title')}\nURL: {res.get('href', 'No URL')}\nSnippet: {res.get('body', 'No Snippet')}\n\n"
+            return formatted
+        except Exception as e:
+            return f"Search error: {e}"
+
+    @staticmethod
+    async def fetch_webpage(url: str) -> str:
+        """Fetch the text content of a webpage (no images/scripts)."""
+        import httpx
+        from bs4 import BeautifulSoup
+        try:
+            async with httpx.AsyncClient(follow_redirects=True, timeout=15.0) as client:
+                headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+                resp = await client.get(url, headers=headers)
+                resp.raise_for_status()
+
+                soup = BeautifulSoup(resp.text, 'html.parser')
+                # Remove scripts and styles
+                for script in soup(["script", "style"]):
+                    script.extract()
+
+                text = soup.get_text(separator=' ', strip=True)
+                # Truncate to avoid context explosion
+                if len(text) > 10000:
+                    text = text[:10000] + "\n... [TRUNCATED]"
+                return f"Content of {url}:\n\n{text}"
+        except Exception as e:
+            return f"Error fetching webpage: {e}"
+
+    @staticmethod
     def open_browser_url(url: str) -> str:
         """Open a URL in the system's default web browser."""
         import webbrowser
@@ -55,6 +98,45 @@ class OSTools:
             return f"Error opening browser: {e}"
 
     @staticmethod
+    async def add_external_skill_repo(repo_url: str) -> str:
+        """Clone a github repo and install its skills into the AI OS."""
+        import tempfile
+        import shutil
+        import asyncio
+
+        tmp_dir = tempfile.mkdtemp()
+        try:
+            process = await asyncio.create_subprocess_shell(
+                f"git clone {repo_url} {tmp_dir}",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            await process.communicate()
+
+            if process.returncode != 0:
+                return f"Error: Failed to clone repository {repo_url}"
+
+            from app.skills.skill_manager import skill_manager
+            target_dir = skill_manager.skills_dir
+
+            skills_copied = 0
+            for root, dirs, files in os.walk(tmp_dir):
+                for file in files:
+                    if file.endswith(".md"):
+                        src_file = os.path.join(root, file)
+                        # We create a unique name based on the path to avoid collisions
+                        rel_path = os.path.relpath(src_file, tmp_dir).replace(os.sep, "_")
+                        dst_file = os.path.join(target_dir, rel_path)
+                        shutil.copy2(src_file, dst_file)
+                        skills_copied += 1
+
+            return f"Successfully cloned {repo_url} and integrated {skills_copied} new skills dynamically!"
+        except Exception as e:
+            return f"Error integrating skill repo: {e}"
+        finally:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+
+    @staticmethod
     async def run_bash(command: str) -> str:
         """Run a bash command asynchronously and return output."""
         import asyncio
@@ -65,13 +147,13 @@ class OSTools:
                 stderr=asyncio.subprocess.PIPE
             )
 
-            # Add a timeout manually since create_subprocess_shell doesn't have it built-in
+            # Add a longer timeout for heavy operations like git clone or npm install
             try:
-                stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=30.0)
+                stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=300.0)
             except asyncio.TimeoutError:
                 process.kill()
                 await process.communicate()
-                return "Command timed out."
+                return "Command timed out after 300 seconds."
 
             output = stdout.decode()
             err_output = stderr.decode()

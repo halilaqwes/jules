@@ -37,8 +37,9 @@ async def startup_event():
     skills_dir = os.path.join(os.path.dirname(__file__), "skills", "data")
     if not os.path.exists(skills_dir) or len(os.listdir(skills_dir)) < 100:
         import subprocess
+        import sys
         print("Running skill downloader...")
-        subprocess.run(["python", os.path.join(os.path.dirname(__file__), "..", "download_skills.py")])
+        subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "..", "download_skills.py")])
 
     # Start the 24/7 background agent loop
     import asyncio

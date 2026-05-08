@@ -7,3 +7,5 @@ colorama
 requests
 httpx
 sqlite-vec
+ddgs
+beautifulsoup4

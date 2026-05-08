@@ -2,9 +2,9 @@ import os
 
 class SkillManager:
     def __init__(self, skills_dir: str = None):
-        import tempfile
-        # Default to a safe temp directory if not provided, avoiding hardcoded /tmp for cross-platform compatibility
-        self.skills_dir = skills_dir if skills_dir else os.path.join(tempfile.gettempdir(), "skills", "skills")
+        # Default to the bundled data directory alongside this file
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        self.skills_dir = skills_dir if skills_dir else os.path.join(current_dir, "data")
 
     def search_skills(self, query: str, limit: int = 3) -> str:
         """Search the skills directory for files matching the query and return their contents."""

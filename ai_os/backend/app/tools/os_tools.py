@@ -75,11 +75,18 @@ class OSTools:
 
             output = stdout.decode()
             err_output = stderr.decode()
+            exit_code = process.returncode
 
+            result_str = f"Exit Code: {exit_code}\n"
+            if output:
+                result_str += f"STDOUT:\n{output}\n"
             if err_output:
-                output += f"\nSTDERR:\n{err_output}"
+                result_str += f"STDERR:\n{err_output}\n"
 
-            return output if output else "Command executed successfully (no output)."
+            if not output and not err_output and exit_code == 0:
+                result_str += "Command executed successfully (no output)."
+
+            return result_str
         except Exception as e:
             return f"Error executing command: {e}"
 

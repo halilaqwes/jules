@@ -14,8 +14,9 @@ class Orchestrator:
         self.chat_history = []  # Store direct user-agent conversation
         self.system_prompt = """You are the Main Orchestrator Agent of an advanced AI OS with FULL system access.
 Your job is to run autonomously 24/7. YOU MUST NEVER ASK THE USER FOR CONFIRMATION OR HELP.
-If you encounter an error (e.g., from a tool or bash command), you must analyze the error and try a different approach immediately.
-You are self-healing and self-correcting.
+If you encounter an error (e.g., a file not found, a bash error), you MUST NOT say "I cannot correct this" or "I await full output".
+Instead, you MUST proactively use `run_bash` (like `ls -la`, `pwd`, `dir`) or `read_file` to investigate the environment, find the correct paths, and solve the problem yourself.
+You are strictly forbidden from giving up. You are self-healing and self-correcting.
 
 You have access to tools. To use a tool, output a JSON block exactly like this:
 ```json
@@ -70,28 +71,47 @@ Please respond to the User. You can use tools if needed to fulfill their request
         response = await ollama_service.generate_response(self.model, prompt, system=sys_prompt)
         self.chat_history.append({"role": "agent", "content": response})
 
-        # Check if a tool was requested during chat
-        tool_call = self._parse_tool_call(response)
-        if tool_call and "tool" in tool_call and "args" in tool_call:
-             # We let the main loop handle the tool execution logic, or handle it here if it's immediate
-             # For chat, executing immediately is better for UX
-             tool_name = tool_call["tool"]
-             args = tool_call["args"]
-             if tool_name == "delegate_task":
-                 from app.agents.sub_agents import sub_agent_manager
-                 agent_type = args.get("agent_type")
-                 task = args.get("task_description")
-                 if agent_type in sub_agent_manager.sub_agents:
-                     tool_result = await sub_agent_manager.sub_agents[agent_type](task, self.model)
-                 else:
-                     tool_result = f"Error: Sub-agent type '{agent_type}' not found."
-             else:
-                 tool_result = await tool_manager.execute_tool(tool_name, **args)
+        # Autonomous Retry Loop for Chat
+        max_retries = 5
+        retries = 0
 
-             # Feed tool result back to chat
-             followup_prompt = f"Tool Result for {tool_name}:\n{tool_result}\n\nTell the user the result."
-             response = await ollama_service.generate_response(self.model, followup_prompt, system=sys_prompt)
-             self.chat_history.append({"role": "agent", "content": response})
+        while retries < max_retries:
+            tool_call = self._parse_tool_call(response)
+            if not tool_call or "tool" not in tool_call or "args" not in tool_call:
+                # If no tool was called, or it's just a normal conversation, break and return
+                break
+
+            tool_name = tool_call["tool"]
+            args = tool_call["args"]
+
+            if tool_name == "delegate_task":
+                from app.agents.sub_agents import sub_agent_manager
+                agent_type = args.get("agent_type")
+                task = args.get("task_description")
+                if agent_type in sub_agent_manager.sub_agents:
+                    tool_result = await sub_agent_manager.sub_agents[agent_type](task, self.model)
+                else:
+                    tool_result = f"Error: Sub-agent type '{agent_type}' not found."
+            else:
+                tool_result = await tool_manager.execute_tool(tool_name, **args)
+
+            # Feed tool result back to chat and FORCE it to keep going if there is an error
+            # Include chat context so LLM does not forget original user request
+            chat_context = "\n".join([f"{msg['role'].capitalize()}: {msg['content']}" for msg in self.chat_history[-5:]])
+
+            followup_prompt = f"Original Conversation:\n{chat_context}\n\nTool '{tool_name}' executed.\nResult:\n{tool_result}\n\n"
+
+            if "Error" in str(tool_result) or "failed" in str(tool_result).lower() or "exit code" in str(tool_result).lower() and "exit code: 0" not in str(tool_result).lower():
+                 followup_prompt += "WARNING: The tool execution failed or returned an error. DO NOT GIVE UP. DO NOT ask the user for help. You must immediately formulate a new plan, use a different tool (like run_bash to list directories `ls` or `dir`), and try again to solve the user's original request. Call another tool now."
+            else:
+                 followup_prompt += "If the user's request is fully solved, provide the final conversational answer. If not, continue using tools to finish the job."
+
+            # Append the hidden system context so the model knows what happened, but we don't show all this to user directly
+            self.chat_history.append({"role": "agent", "content": f"[Tool used: {tool_name}]"})
+
+            response = await ollama_service.generate_response(self.model, followup_prompt, system=sys_prompt)
+            self.chat_history.append({"role": "agent", "content": response})
+            retries += 1
 
         return response
 

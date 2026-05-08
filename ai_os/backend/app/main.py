@@ -10,30 +10,39 @@ from .agents.orchestrator import orchestrator
 
 app = FastAPI(title="AI OS Backend")
 
-@app.on_event("startup")
-async def startup_event():
-    # Start the 24/7 background agent loop
-    asyncio.create_task(orchestrator.run_loop())
-
 @app.on_event("shutdown")
 def shutdown_event():
     orchestrator.stop()
 
-# Setup CORS - Lock down to Vite dev server port and Electron app
+# Setup CORS - Allow Vite dev server and Electron app
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "file://", "app://."],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Setup Socket.IO - Lock down origins to prevent CSWSH
+# Setup Socket.IO - Allow specific origins and Electron protocol
 sio = socketio.AsyncServer(
     async_mode='asgi',
-    cors_allowed_origins=["http://localhost:5173", "http://127.0.0.1:5173"]
+    cors_allowed_origins="*" # We must allow * for electron apps loading via file:// or custom protocols, but the API itself runs entirely locally.
 )
 sio_app = socketio.ASGIApp(sio, other_asgi_app=app)
+
+@app.on_event("startup")
+async def startup_event():
+    import os
+    # Ensure skills are downloaded on startup if missing
+    skills_dir = os.path.join(os.path.dirname(__file__), "skills", "data")
+    if not os.path.exists(skills_dir) or len(os.listdir(skills_dir)) < 100:
+        import subprocess
+        print("Running skill downloader...")
+        subprocess.run(["python", os.path.join(os.path.dirname(__file__), "..", "download_skills.py")])
+
+    # Start the 24/7 background agent loop
+    import asyncio
+    asyncio.create_task(orchestrator.run_loop())
 
 @app.get("/api/models")
 async def get_models():

@@ -26,15 +26,25 @@ class OllamaService:
                     "model": model,
                     "prompt": prompt,
                     "system": system,
-                    "stream": False
+                    "stream": False,
+                    "options": {
+                        "num_ctx": 32768  # Maximize context window (32K) to support huge un-truncated skills
+                    }
                 }
                 response = await client.post(f"{self.base_url}/api/generate", json=payload, timeout=120.0)
                 response.raise_for_status()
                 data = response.json()
                 return data.get("response", "")
+            except httpx.HTTPStatusError as e:
+                print(f"Ollama HTTP Error: {e.response.status_code} - {e.response.text}")
+                if e.response.status_code == 500:
+                    return "Error: Local model crashed (500 Internal Server Error). This usually means the model is not downloaded correctly, the context limit is too high for your RAM, or Ollama needs a restart."
+                elif e.response.status_code == 404:
+                    return f"Error: Model '{model}' not found in Ollama. Please download it first."
+                return f"Ollama API Error: {e.response.status_code}"
             except Exception as e:
                 print(f"Error generating response: {e}")
-                return f"Error: {str(e)}"
+                return f"Connection Error: Cannot reach Ollama at {self.base_url}. Ensure Ollama is running."
 
     async def stream_response(self, model: str, prompt: str, system: str = ""):
         """Stream a response from the model (Generator)."""

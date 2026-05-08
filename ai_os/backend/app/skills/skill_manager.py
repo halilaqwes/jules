@@ -26,7 +26,8 @@ class SkillManager:
                                 try:
                                     with open(os.path.join(item_path, file), "r", encoding="utf-8") as f:
                                         content = f.read()
-                                        matched_skills.append(f"--- Skill: {item} ---\n{content[:1000]}...\n") # Truncate for context limit
+                                        # NO TRUNCATION. Give the AI the FULL expert knowledge.
+                                        matched_skills.append(f"--- Skill: {item} ---\n{content}\n")
                                 except Exception:
                                     pass
                         if len(matched_skills) >= limit:
@@ -36,7 +37,8 @@ class SkillManager:
                         try:
                             with open(item_path, "r", encoding="utf-8") as f:
                                 content = f.read()
-                                matched_skills.append(f"--- Skill: {item} ---\n{content[:1000]}...\n")
+                                # NO TRUNCATION
+                                matched_skills.append(f"--- Skill: {item} ---\n{content}\n")
                         except Exception:
                             pass
                         if len(matched_skills) >= limit:

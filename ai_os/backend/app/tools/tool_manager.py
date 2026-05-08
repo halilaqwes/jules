@@ -69,21 +69,43 @@ def register_tool(manager):
     manager.register("{tool_name}", {tool_name}, "{description}")
 """
         try:
+            import py_compile
+            import traceback
+            # 1. First, compile the code to check for SyntaxErrors before writing
+            try:
+                py_compile.compile(file_path, doraise=True) # Will fail since file doesn't exist yet, so we compile string
+            except Exception:
+                pass # Handled below by compile string
+
+            try:
+                compile(wrapped_code, f"{tool_name}_virtual.py", "exec")
+            except SyntaxError as e:
+                err_msg = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+                return f"SyntaxError in your generated code. Please fix it and try again:\n{err_msg}"
+
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(wrapped_code)
 
-            # Dynamically load the new module
+            # 2. Dynamically load the new module
             spec = importlib.util.spec_from_file_location(tool_name, file_path)
             module = importlib.util.module_from_spec(spec)
             sys.modules[tool_name] = module
-            spec.loader.exec_module(module)
+
+            try:
+                spec.loader.exec_module(module)
+            except Exception as e:
+                # If execution/import fails (e.g. ModuleNotFoundError inside the code)
+                err_msg = "".join(traceback.format_exception(type(e), e, e.__traceback__))
+                os.remove(file_path) # Cleanup broken file
+                return f"Runtime Error while loading your module. Did you import a missing package? Fix and retry:\n{err_msg}"
 
             if hasattr(module, "register_tool"):
                 module.register_tool(self)
                 return f"Successfully created and loaded custom tool '{tool_name}'!"
             return "Tool file written, but failed to find register_tool hook."
         except Exception as e:
-            return f"Error creating custom tool: {e}"
+            import traceback
+            return f"Error creating custom tool:\n{traceback.format_exc()}"
 
     def _save_lesson(self, lesson: str) -> str:
         from app.services.memory_service import memory_service

@@ -62,27 +62,27 @@ class OSTools:
 
     @staticmethod
     async def fetch_webpage(url: str) -> str:
-        """Fetch the text content of a webpage (no images/scripts)."""
-        import httpx
-        from bs4 import BeautifulSoup
+        """Fetch the text content of a webpage smartly using Scrapling."""
+        from scrapling import Fetcher
+        import traceback
+        import asyncio
+
+        def run_fetch():
+            # Modern Scrapling uses get() to fetch the page
+            page = Fetcher.get(url)
+            # Find the main body or text
+            return page.text
+
         try:
-            async with httpx.AsyncClient(follow_redirects=True, timeout=15.0) as client:
-                headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
-                resp = await client.get(url, headers=headers)
-                resp.raise_for_status()
+            loop = asyncio.get_event_loop()
+            text = await loop.run_in_executor(None, run_fetch)
 
-                soup = BeautifulSoup(resp.text, 'html.parser')
-                # Remove scripts and styles
-                for script in soup(["script", "style"]):
-                    script.extract()
-
-                text = soup.get_text(separator=' ', strip=True)
-                # Truncate to avoid context explosion
-                if len(text) > 10000:
-                    text = text[:10000] + "\n... [TRUNCATED]"
-                return f"Content of {url}:\n\n{text}"
+            # Truncate to avoid context explosion
+            if len(text) > 10000:
+                text = text[:10000] + "\n... [TRUNCATED]"
+            return f"Content of {url}:\n\n{text}"
         except Exception as e:
-            return f"Error fetching webpage: {e}"
+            return f"Error fetching webpage with Scrapling:\n{traceback.format_exc()}"
 
     @staticmethod
     def open_browser_url(url: str) -> str:

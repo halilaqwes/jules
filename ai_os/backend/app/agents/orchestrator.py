@@ -11,9 +11,12 @@ class Orchestrator:
         self.is_running = False
         self.current_goal = ""
         self.model = "qwen2.5:latest" # Default, can be changed dynamically
-        self.system_prompt = """You are the Main Orchestrator Agent of an advanced AI OS.
-Your job is to run 24/7 and achieve the user's goals.
-You have access to tools. To use a tool, output a JSON block like this:
+        self.system_prompt = """You are the Main Orchestrator Agent of an advanced AI OS with FULL system access.
+Your job is to run autonomously 24/7. YOU MUST NEVER ASK THE USER FOR CONFIRMATION OR HELP.
+If you encounter an error (e.g., from a tool or bash command), you must analyze the error and try a different approach immediately.
+You are self-healing and self-correcting.
+
+You have access to tools. To use a tool, output a JSON block exactly like this:
 ```json
 {
   "tool": "tool_name",
@@ -26,7 +29,9 @@ You have access to tools. To use a tool, output a JSON block like this:
 Available Tools:
 {tools}
 
-Always explain your reasoning before taking an action.
+{lessons}
+
+Always explain your reasoning before taking an action. If your previous action resulted in an error, explain why it failed and what your new strategy is.
 """
 
     def set_model(self, model_name: str):
@@ -56,15 +61,20 @@ Always explain your reasoning before taking an action.
         recent_events = memory_service.get_recent_events("orchestrator", limit=10)
         history = "\n".join([f"[{e['timestamp']}] {e['event_type']}: {e['content']}" for e in recent_events])
 
+        # Fetch learned lessons to include in the system prompt
+        lessons = memory_service.get_memory("learned_lessons") or []
+        lessons_text = "Important Lessons Learned from Past Mistakes:\n" + "\n".join([f"- {l}" for l in lessons]) if lessons else ""
+
         prompt = f"""
 Current Goal: {self.current_goal}
 
-Recent History:
+Recent History (including your tool results and errors):
 {history}
 
-What is your next step? (Use a tool if needed, otherwise just reason).
+What is your next step? Remember: Do NOT ask the user for help. If there is an error in history, fix it yourself.
 """
         sys_prompt = self.system_prompt.replace("{tools}", tool_manager.get_available_tools_description())
+        sys_prompt = sys_prompt.replace("{lessons}", lessons_text)
 
         # Generate response
         response = await ollama_service.generate_response(self.model, prompt, system=sys_prompt)
@@ -77,8 +87,19 @@ What is your next step? (Use a tool if needed, otherwise just reason).
             args = tool_call["args"]
             memory_service.log_event("orchestrator", "tool_call", f"Calling {tool_name} with {args}")
 
-            # Execute tool
-            tool_result = tool_manager.execute_tool(tool_name, **args)
+            # Special case for sub-agents (async tool execution)
+            if tool_name == "delegate_task":
+                from app.agents.sub_agents import sub_agent_manager
+                agent_type = args.get("agent_type")
+                task = args.get("task_description")
+                if agent_type in sub_agent_manager.sub_agents:
+                    tool_result = await sub_agent_manager.sub_agents[agent_type](task, self.model)
+                else:
+                    tool_result = f"Error: Sub-agent type '{agent_type}' not found."
+            else:
+                # Execute normal synchronous tool
+                tool_result = tool_manager.execute_tool(tool_name, **args)
+
             memory_service.log_event("orchestrator", "tool_result", str(tool_result))
 
         await asyncio.sleep(1)

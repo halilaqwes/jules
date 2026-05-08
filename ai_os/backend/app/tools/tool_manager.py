@@ -13,6 +13,21 @@ class ToolManager:
         self.register("write_file", os_tools.write_file, "Write contents to a file. Args: filepath (str), content (str)")
         self.register("run_bash", os_tools.run_bash, "Run a bash command. Args: command (str)")
 
+        # Will register dynamic tools later
+        self.register("delegate_task", lambda **kwargs: "Async handled by orchestrator",
+                      "Delegate a specific task to a sub-agent. Args: agent_type (str: 'tester' or 'researcher'), task_description (str)")
+
+        self.register("save_lesson", self._save_lesson, "Save a lesson learned from a mistake or success to memory. Args: lesson (str)")
+
+    def _save_lesson(self, lesson: str) -> str:
+        from app.services.memory_service import memory_service
+        lessons = memory_service.get_memory("learned_lessons") or []
+        if lesson not in lessons:
+            lessons.append(lesson)
+            memory_service.set_memory("learned_lessons", lessons)
+            return f"Lesson successfully saved: {lesson}"
+        return "Lesson already exists in memory."
+
     def register(self, name: str, func: Callable, description: str):
         """Register a new tool dynamically."""
         self.tools[name] = {

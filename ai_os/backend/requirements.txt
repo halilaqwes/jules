@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+pydantic
+python-socketio
+aiohttp
+colorama
+requests
+httpx
+sqlite-vec

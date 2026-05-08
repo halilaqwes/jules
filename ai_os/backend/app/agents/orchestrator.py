@@ -11,6 +11,7 @@ class Orchestrator:
         self.is_running = False
         self.current_goal = ""
         self.model = "qwen2.5:latest" # Default, can be changed dynamically
+        self.chat_history = []  # Store direct user-agent conversation
         self.system_prompt = """You are the Main Orchestrator Agent of an advanced AI OS with FULL system access.
 Your job is to run autonomously 24/7. YOU MUST NEVER ASK THE USER FOR CONFIRMATION OR HELP.
 If you encounter an error (e.g., from a tool or bash command), you must analyze the error and try a different approach immediately.
@@ -40,6 +41,53 @@ Always explain your reasoning before taking an action. If your previous action r
     def set_goal(self, goal: str):
         self.current_goal = goal
         memory_service.set_memory("current_goal", goal)
+
+    async def handle_chat_message(self, message: str) -> str:
+        """Handle a direct chat message from the user and respond."""
+        self.chat_history.append({"role": "user", "content": message})
+
+        # Build prompt specifically for chat
+        sys_prompt = self.system_prompt.replace("{tools}", tool_manager.get_available_tools_description())
+        lessons = memory_service.get_memory("learned_lessons") or []
+        lessons_text = "Important Lessons:\n" + "\n".join([f"- {l}" for l in lessons]) if lessons else ""
+        sys_prompt = sys_prompt.replace("{lessons}", lessons_text)
+
+        chat_context = "\n".join([f"{msg['role'].capitalize()}: {msg['content']}" for msg in self.chat_history[-5:]])
+
+        prompt = f"""
+You are talking directly to the user.
+Recent Conversation:
+{chat_context}
+
+Please respond to the User. You can use tools if needed to fulfill their request, or just talk to them normally.
+"""
+        response = await ollama_service.generate_response(self.model, prompt, system=sys_prompt)
+        self.chat_history.append({"role": "agent", "content": response})
+
+        # Check if a tool was requested during chat
+        tool_call = self._parse_tool_call(response)
+        if tool_call and "tool" in tool_call and "args" in tool_call:
+             # We let the main loop handle the tool execution logic, or handle it here if it's immediate
+             # For chat, executing immediately is better for UX
+             tool_name = tool_call["tool"]
+             args = tool_call["args"]
+             if tool_name == "delegate_task":
+                 from app.agents.sub_agents import sub_agent_manager
+                 agent_type = args.get("agent_type")
+                 task = args.get("task_description")
+                 if agent_type in sub_agent_manager.sub_agents:
+                     tool_result = await sub_agent_manager.sub_agents[agent_type](task, self.model)
+                 else:
+                     tool_result = f"Error: Sub-agent type '{agent_type}' not found."
+             else:
+                 tool_result = await tool_manager.execute_tool(tool_name, **args)
+
+             # Feed tool result back to chat
+             followup_prompt = f"Tool Result for {tool_name}:\n{tool_result}\n\nTell the user the result."
+             response = await ollama_service.generate_response(self.model, followup_prompt, system=sys_prompt)
+             self.chat_history.append({"role": "agent", "content": response})
+
+        return response
 
     def _parse_tool_call(self, text: str) -> Optional[Dict]:
         """Extract tool call JSON from text."""
@@ -97,8 +145,8 @@ What is your next step? Remember: Do NOT ask the user for help. If there is an e
                 else:
                     tool_result = f"Error: Sub-agent type '{agent_type}' not found."
             else:
-                # Execute normal synchronous tool
-                tool_result = tool_manager.execute_tool(tool_name, **args)
+                # Execute normal synchronous/async tool
+                tool_result = await tool_manager.execute_tool(tool_name, **args)
 
             memory_service.log_event("orchestrator", "tool_result", str(tool_result))
 

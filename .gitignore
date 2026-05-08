@@ -1,6 +1,7 @@
-node_modules/\nvenv/\n__pycache__/\n*.pyc\n.DS_Store
-ai_os/backend/venv/
-**/node_modules/
-**/.DS_Store
+node_modules/
+venv/
 __pycache__/
 *.pyc
+*.db
+.DS_Store
+dist/

@@ -72,6 +72,25 @@ async def set_goal(sid, data: dict):
         orchestrator.set_goal(goal)
     await sio.emit("agent_status", {"status": "goal_set", "goal": goal}, room=sid)
 
+@sio.event
+async def chat_message(sid, data: dict):
+    """Handle incoming chat message from the user."""
+    message = data.get("message")
+    model = data.get("model")
+    if model:
+        orchestrator.set_model(model)
+
+    if message:
+        print(f"Received chat message: {message}")
+        # Send an immediate processing status
+        await sio.emit("chat_status", {"status": "thinking"}, room=sid)
+
+        # Get AI response
+        response = await orchestrator.handle_chat_message(message)
+
+        # Reply back
+        await sio.emit("chat_reply", {"message": response}, room=sid)
+
 # Forwarding memory logs to socketio clients for real-time dashboard tracking
 def log_event_hook(agent_id, event_type, content):
     asyncio.create_task(sio.emit("agent_log", {"agent": agent_id, "type": event_type, "content": content}))
@@ -79,4 +98,4 @@ def log_event_hook(agent_id, event_type, content):
 memory_service.log_event_hook = log_event_hook
 
 if __name__ == "__main__":
-    uvicorn.run("app.main:sio_app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("app.main:sio_app", host="127.0.0.1", port=8000, reload=True)

@@ -28,16 +28,31 @@ class OSTools:
             return f"Error writing file: {e}"
 
     @staticmethod
-    def run_bash(command: str) -> str:
-        """Run a bash command and return output."""
+    async def run_bash(command: str) -> str:
+        """Run a bash command asynchronously and return output."""
+        import asyncio
         try:
-            result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=30)
-            output = result.stdout
-            if result.stderr:
-                output += f"\nSTDERR:\n{result.stderr}"
+            process = await asyncio.create_subprocess_shell(
+                command,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+
+            # Add a timeout manually since create_subprocess_shell doesn't have it built-in
+            try:
+                stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=30.0)
+            except asyncio.TimeoutError:
+                process.kill()
+                await process.communicate()
+                return "Command timed out."
+
+            output = stdout.decode()
+            err_output = stderr.decode()
+
+            if err_output:
+                output += f"\nSTDERR:\n{err_output}"
+
             return output if output else "Command executed successfully (no output)."
-        except subprocess.TimeoutExpired:
-            return "Command timed out."
         except Exception as e:
             return f"Error executing command: {e}"
 

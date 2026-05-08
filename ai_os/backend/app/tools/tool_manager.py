@@ -42,14 +42,18 @@ class ToolManager:
             descriptions.append(f"- {name}: {tool_info['description']}")
         return "\n".join(descriptions)
 
-    def execute_tool(self, tool_name: str, **kwargs) -> Any:
+    async def execute_tool(self, tool_name: str, **kwargs) -> Any:
         """Execute a tool by name with the given arguments."""
         if tool_name not in self.tools:
             return f"Error: Tool '{tool_name}' not found."
 
         func = self.tools[tool_name]["function"]
         try:
-            return func(**kwargs)
+            import inspect
+            if inspect.iscoroutinefunction(func):
+                return await func(**kwargs)
+            else:
+                return func(**kwargs)
         except Exception as e:
             return f"Error executing tool '{tool_name}': {e}"
 

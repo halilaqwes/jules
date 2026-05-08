@@ -31,7 +31,7 @@ class SubAgentManager:
             try:
                 tool_call = json.loads(match.group(1))
                 if "tool" in tool_call and "args" in tool_call:
-                    tool_result = tool_manager.execute_tool(tool_call["tool"], **tool_call["args"])
+                    tool_result = await tool_manager.execute_tool(tool_call["tool"], **tool_call["args"])
                     # Send result back to model for final evaluation
                     eval_prompt = f"You used a tool. Result:\n{tool_result}\n\nBased on this result, write the final test report."
                     final_response = await ollama_service.generate_response(model, eval_prompt, system=sys_prompt)
@@ -56,7 +56,7 @@ class SubAgentManager:
             try:
                 tool_call = json.loads(match.group(1))
                 if "tool" in tool_call and "args" in tool_call:
-                    tool_result = tool_manager.execute_tool(tool_call["tool"], **tool_call["args"])
+                    tool_result = await tool_manager.execute_tool(tool_call["tool"], **tool_call["args"])
                     eval_prompt = f"Tool Result:\n{tool_result}\n\nWrite final research summary."
                     final_response = await ollama_service.generate_response(model, eval_prompt, system=sys_prompt)
                     return f"Researcher Report:\n{final_response}"

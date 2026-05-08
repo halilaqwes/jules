@@ -1,14 +1,30 @@
 import { AgentSidebar } from '../agent/AgentSidebar';
 import { CodeEditor } from '../editor/CodeEditor';
-import { useState } from 'react';
+import { ChatPanel } from '../chat/ChatPanel';
+import { useState, useEffect } from 'react';
 
 export function MainLayout() {
     const [code, setCode] = useState<string>('# Welcome to AI OS\n# Select a file or ask the agent to write code.');
+    const [selectedModel, setSelectedModel] = useState<string>('qwen2.5:latest');
+
+    // We can fetch models here so both sidebar and chat know about it,
+    // but for now, we'll let AgentSidebar update this state if we lift it up.
+    // For simplicity, we'll fetch it here to pass to chat.
+    useEffect(() => {
+        fetch('http://localhost:8000/api/models')
+            .then(res => res.json())
+            .then(data => {
+                if (data.models && data.models.length > 0) {
+                    setSelectedModel(data.models[0].name);
+                }
+            })
+            .catch(err => console.error(err));
+    }, []);
 
     return (
         <div className="flex h-screen w-screen bg-black overflow-hidden font-sans">
             <AgentSidebar />
-            <div className="flex-1 flex flex-col min-w-0">
+            <div className="flex-1 flex flex-col min-w-0 border-r border-gray-800">
                 <div className="h-10 bg-[#1e1e1e] border-b border-gray-800 flex items-center px-4 text-xs text-gray-400">
                     <span>workspace / main.py</span>
                 </div>
@@ -16,6 +32,7 @@ export function MainLayout() {
                     <CodeEditor fileContent={code} onChange={(v) => setCode(v || '')} />
                 </div>
             </div>
+            <ChatPanel selectedModel={selectedModel} />
         </div>
     );
 }

@@ -7,10 +7,24 @@ class OSTools:
 
     @staticmethod
     def read_file(filepath: str) -> str:
-        """Read a file from disk."""
+        """Read a file from disk and provide a summary if it's too large."""
+        import os
         try:
+            if not os.path.exists(filepath):
+                return f"Error: File '{filepath}' does not exist."
+
+            # If file is too large (e.g., > 50KB), we truncate it so we don't blow up context limit
+            file_size = os.path.getsize(filepath)
+            MAX_SIZE = 50 * 1024 # 50 KB
+
             with open(filepath, 'r', encoding='utf-8') as f:
-                return f.read()
+                if file_size > MAX_SIZE:
+                    content = f.read(MAX_SIZE)
+                    return f"--- FILE IS LARGE (Truncated to first 50KB for analysis) ---\n{content}\n... [TRUNCATED]"
+                else:
+                    return f.read()
+        except UnicodeDecodeError:
+            return f"Error: File '{filepath}' appears to be a binary file or non-UTF-8 text."
         except Exception as e:
             return f"Error reading file: {e}"
 
@@ -26,6 +40,19 @@ class OSTools:
             return f"Successfully wrote to {filepath}"
         except Exception as e:
             return f"Error writing file: {e}"
+
+    @staticmethod
+    def open_browser_url(url: str) -> str:
+        """Open a URL in the system's default web browser."""
+        import webbrowser
+        try:
+            success = webbrowser.open(url)
+            if success:
+                return f"Successfully opened {url} in the browser."
+            else:
+                return f"Failed to open {url} in the browser."
+        except Exception as e:
+            return f"Error opening browser: {e}"
 
     @staticmethod
     async def run_bash(command: str) -> str:

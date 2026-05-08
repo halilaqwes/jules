@@ -12,6 +12,7 @@ class ToolManager:
         self.register("read_file", os_tools.read_file, "Read the contents of a file. Args: filepath (str)")
         self.register("write_file", os_tools.write_file, "Write contents to a file. Args: filepath (str), content (str)")
         self.register("run_bash", os_tools.run_bash, "Run a bash command. Args: command (str)")
+        self.register("open_browser_url", os_tools.open_browser_url, "Open a URL in the system's default web browser. Args: url (str)")
 
         # Will register dynamic tools later
         self.register("delegate_task", lambda **kwargs: "Async handled by orchestrator",

@@ -19,17 +19,20 @@ async def startup_event():
 def shutdown_event():
     orchestrator.stop()
 
-# Setup CORS
+# Setup CORS - Lock down to Vite dev server port and Electron app
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Setup Socket.IO
-sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins="*")
+# Setup Socket.IO - Lock down origins to prevent CSWSH
+sio = socketio.AsyncServer(
+    async_mode='asgi',
+    cors_allowed_origins=["http://localhost:5173", "http://127.0.0.1:5173"]
+)
 sio_app = socketio.ASGIApp(sio, other_asgi_app=app)
 
 @app.get("/api/models")

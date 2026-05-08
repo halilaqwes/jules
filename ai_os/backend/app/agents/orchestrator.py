@@ -52,6 +52,12 @@ Always explain your reasoning before taking an action. If your previous action r
         lessons_text = "Important Lessons:\n" + "\n".join([f"- {l}" for l in lessons]) if lessons else ""
         sys_prompt = sys_prompt.replace("{lessons}", lessons_text)
 
+        # Inject relevant skills based on user message
+        from app.skills.skill_manager import skill_manager
+        skills_text = skill_manager.search_skills(message)
+        if skills_text:
+            sys_prompt += f"\n\n{skills_text}"
+
         chat_context = "\n".join([f"{msg['role'].capitalize()}: {msg['content']}" for msg in self.chat_history[-5:]])
 
         prompt = f"""
@@ -123,6 +129,12 @@ What is your next step? Remember: Do NOT ask the user for help. If there is an e
 """
         sys_prompt = self.system_prompt.replace("{tools}", tool_manager.get_available_tools_description())
         sys_prompt = sys_prompt.replace("{lessons}", lessons_text)
+
+        # Inject relevant skills based on current goal
+        from app.skills.skill_manager import skill_manager
+        skills_text = skill_manager.search_skills(self.current_goal)
+        if skills_text:
+            sys_prompt += f"\n\n{skills_text}"
 
         # Generate response
         response = await ollama_service.generate_response(self.model, prompt, system=sys_prompt)

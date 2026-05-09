@@ -1,0 +1,3 @@
+## 2024-05-09 - High-Frequency State (Keystrokes) Causes Global Re-Renders
+**Learning:** In `MainLayout.tsx`, the `code` state (updated on every keystroke) was placed at the top level alongside `AgentSidebar` and `ChatPanel`. This caused the entire application, including unaffected side panels, to re-render on every keystroke. This architectural pattern degrades typing performance in text-heavy applications like this code editor.
+**Action:** Always isolate high-frequency state (like keystrokes or mouse movements) into the lowest possible component (e.g., creating a separate `Workspace` component) to prevent unnecessary re-rendering of sibling components.

@@ -13,56 +13,52 @@ class SubAgentManager:
             "researcher": self.run_researcher_agent
         }
 
-    async def run_tester_agent(self, task_description: str, model: str = "qwen2.5:latest") -> str:
-        """A sub-agent focused solely on testing code and finding bugs."""
-        sys_prompt = "You are an expert software QA and Tester. Your job is to test code, find bugs, and report back. You cannot modify code, only run tests and return the results to the orchestrator."
-        sys_prompt += f"\n\nAvailable Tools:\n{tool_manager.get_available_tools_description()}"
-
-        prompt = f"Task: {task_description}\n\nThink step by step, use tools if needed (e.g. run_bash to execute pytest), and provide a final detailed test report."
-
-        # For simplicity in this demo, the sub-agent runs a single zero-shot generation loop.
-        # In a fully fleshed out system, this would be a while loop similar to the orchestrator.
-        response = await ollama_service.generate_response(model, prompt, system=sys_prompt)
-
-        # Check if the sub agent tried to use a tool
+    async def _autonomous_loop(self, role_name: str, sys_prompt: str, task_description: str, model: str) -> str:
+        """A generic autonomous loop for sub-agents."""
         import re
-        match = re.search(r'```json\s*(\{.*?\})\s*```', response, re.DOTALL)
-        if match:
+        history = []
+        max_retries = 5
+        retries = 0
+
+        prompt = f"Task: {task_description}\n\nThink step by step. Use tools to achieve your goal. If a tool fails, DO NOT give up. Formulate a new plan and try a different tool or command."
+
+        while retries < max_retries:
+            response = await ollama_service.generate_response(model, prompt, system=sys_prompt)
+            history.append(f"[{role_name} Thought]: {response}")
+
+            match = re.search(r'```json\s*(\{.*?\})\s*```', response, re.DOTALL)
+            if not match:
+                # No tool used, must be the final report
+                return f"{role_name} Final Report:\n{response}"
+
             try:
                 tool_call = json.loads(match.group(1))
                 if "tool" in tool_call and "args" in tool_call:
-                    tool_result = await tool_manager.execute_tool(tool_call["tool"], **tool_call["args"])
-                    # Send result back to model for final evaluation
-                    eval_prompt = f"You used a tool. Result:\n{tool_result}\n\nBased on this result, write the final test report."
-                    final_response = await ollama_service.generate_response(model, eval_prompt, system=sys_prompt)
-                    return f"Tester Agent Report:\n{final_response}"
-            except json.JSONDecodeError:
-                pass
+                    tool_name = tool_call["tool"]
+                    tool_result = await tool_manager.execute_tool(tool_name, **tool_call["args"])
 
-        return f"Tester Agent Report:\n{response}"
+                    history.append(f"[Tool '{tool_name}' Result]: {tool_result}")
+
+                    prompt = f"Previous actions:\n" + "\n".join(history[-3:]) + f"\n\nTool '{tool_name}' executed. Result:\n{tool_result}\n\nIf you have encountered an error, YOU MUST NOT give up. Fix the issue yourself using other tools. If the original task is complete, provide your final report without calling another tool."
+                else:
+                    break
+            except json.JSONDecodeError:
+                prompt = "Error: Invalid JSON format for tool call. Please output exactly valid JSON."
+
+            retries += 1
+
+        return f"{role_name} Report (Max Retries Reached):\n{response}"
+
+    async def run_tester_agent(self, task_description: str, model: str = "qwen2.5:latest") -> str:
+        """A sub-agent focused solely on testing code and finding bugs."""
+        sys_prompt = "You are an expert software QA and Tester. Your job is to test code, find bugs, and report back. You cannot modify code, only run tests and return the results to the orchestrator. YOU NEVER GIVE UP. If a test fails to run, fix your test setup and run it again. ESCALATION PROTOCOL: If you fail after 2 attempts, use `ask_deepseek_oracle`."
+        sys_prompt += f"\n\nAvailable Tools:\n{tool_manager.get_available_tools_description()}"
+        return await self._autonomous_loop("Tester Agent", sys_prompt, task_description, model)
 
     async def run_researcher_agent(self, task_description: str, model: str = "qwen2.5:latest") -> str:
         """A sub-agent focused on searching the OS or internet for information."""
-        sys_prompt = "You are an expert Researcher Agent. Your job is to find information, read files, or run bash commands to gather data, and return a summary."
+        sys_prompt = "You are an expert Researcher Agent. Your job is to find information, read files, or run bash commands to gather data, and return a summary. YOU NEVER GIVE UP. If a path is wrong, use `ls` to find the right path. If a web search fails, try a different query. ESCALATION PROTOCOL: If you fail after 2 attempts, use `ask_deepseek_oracle`."
         sys_prompt += f"\n\nAvailable Tools:\n{tool_manager.get_available_tools_description()}"
-
-        prompt = f"Task: {task_description}\n\nUse tools to gather info, then summarize."
-        response = await ollama_service.generate_response(model, prompt, system=sys_prompt)
-
-        # Simple one-shot tool execution for the researcher
-        import re
-        match = re.search(r'```json\s*(\{.*?\})\s*```', response, re.DOTALL)
-        if match:
-            try:
-                tool_call = json.loads(match.group(1))
-                if "tool" in tool_call and "args" in tool_call:
-                    tool_result = await tool_manager.execute_tool(tool_call["tool"], **tool_call["args"])
-                    eval_prompt = f"Tool Result:\n{tool_result}\n\nWrite final research summary."
-                    final_response = await ollama_service.generate_response(model, eval_prompt, system=sys_prompt)
-                    return f"Researcher Report:\n{final_response}"
-            except json.JSONDecodeError:
-                pass
-
-        return f"Researcher Report:\n{response}"
+        return await self._autonomous_loop("Researcher Agent", sys_prompt, task_description, model)
 
 sub_agent_manager = SubAgentManager()

@@ -45,6 +45,51 @@ async def startup_event():
     import asyncio
     asyncio.create_task(orchestrator.run_loop())
 
+import os
+
+@app.get("/api/files")
+async def get_files():
+    """Return the workspace file tree (starting from the backend root for demo purposes)."""
+    workspace_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+    def build_tree(dir_path):
+        tree = []
+        try:
+            for item in sorted(os.listdir(dir_path)):
+                # Ignore hidden and virtual env folders
+                if item.startswith('.') or item in ['venv', 'node_modules', '__pycache__']:
+                    continue
+                path = os.path.join(dir_path, item)
+                is_dir = os.path.isdir(path)
+                node = {
+                    "name": item,
+                    "path": os.path.relpath(path, workspace_dir),
+                    "is_dir": is_dir
+                }
+                if is_dir:
+                    # To prevent deep nesting overload, only go 3 levels deep or load on demand
+                    # For simple demo, we map the whole tree
+                    node["children"] = build_tree(path)
+                tree.append(node)
+        except Exception:
+            pass
+        return tree
+
+    return {"tree": build_tree(workspace_dir)}
+
+@app.get("/api/files/read")
+async def read_file_endpoint(path: str):
+    """Read file content for the editor."""
+    workspace_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    full_path = os.path.join(workspace_dir, path)
+    if os.path.exists(full_path) and os.path.isfile(full_path):
+        try:
+            with open(full_path, "r", encoding="utf-8") as f:
+                return {"content": f.read()}
+        except Exception:
+            return {"content": "Cannot read binary or non-utf8 file."}
+    return {"content": "File not found."}
+
 @app.get("/api/models")
 async def get_models():
     models = await ollama_service.list_models()

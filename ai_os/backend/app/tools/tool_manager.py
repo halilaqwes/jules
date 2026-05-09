@@ -2,6 +2,7 @@ import json
 import inspect
 from typing import Callable, Dict, Any, List
 from .os_tools import os_tools
+from .oracle_tools import oracle_tools
 
 class ToolManager:
     def __init__(self):
@@ -16,6 +17,8 @@ class ToolManager:
         self.register("web_search", os_tools.web_search, "Perform a web search to find information, docs, or solutions. Args: query (str)")
         self.register("fetch_webpage", os_tools.fetch_webpage, "Fetch and read the text content of a specific webpage URL. Args: url (str)")
         self.register("add_external_skill_repo", os_tools.add_external_skill_repo, "Clone a github repo url and install its .md skill files into the AI OS memory dynamically. Args: repo_url (str)")
+
+        self.register("ask_deepseek_oracle", oracle_tools.ask_deepseek_oracle, "Escalation Tool: Use this ONLY when you are stuck and cannot resolve an error after multiple attempts. It submits your context to a higher-intelligence Oracle model via web interface to get the correct code/fix. Args: query (str)")
 
         self.register("create_custom_tool", self.create_custom_tool, "Write a new python tool for the AI OS and dynamically load it. Args: tool_name (str), description (str), python_code (str - Must define an async function with the same name as tool_name)")
 

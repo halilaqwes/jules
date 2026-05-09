@@ -34,6 +34,21 @@ class SubAgentManager:
             try:
                 tool_call = json.loads(match.group(1))
                 if "tool" in tool_call and "args" in tool_call:
+                    # Auto-correct if args is a string instead of a dictionary
+                    if isinstance(tool_call["args"], str):
+                        tool_name = tool_call.get("tool", "")
+                        args_str = tool_call["args"]
+                        if tool_name == "run_bash":
+                            tool_call["args"] = {"command": args_str}
+                        elif tool_name == "read_file":
+                            tool_call["args"] = {"filepath": args_str}
+                        elif tool_name == "web_search":
+                            tool_call["args"] = {"query": args_str}
+                        elif tool_name == "ask_deepseek_oracle":
+                            tool_call["args"] = {"query": args_str}
+                        else:
+                            tool_call["args"] = {"arg": args_str}
+
                     tool_name = tool_call["tool"]
                     tool_result = await tool_manager.execute_tool(tool_name, **tool_call["args"])
 

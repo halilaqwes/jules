@@ -122,7 +122,26 @@ Please respond to the User. You can use tools if needed to fulfill their request
         match = re.search(r'```json\s*(\{.*?\})\s*```', text, re.DOTALL)
         if match:
             try:
-                return json.loads(match.group(1))
+                tool_call = json.loads(match.group(1))
+                # Auto-correct if args is a string instead of a dictionary
+                if "args" in tool_call and isinstance(tool_call["args"], str):
+                    tool_name = tool_call.get("tool", "")
+                    args_str = tool_call["args"]
+
+                    # Heuristic mapping for common tools
+                    if tool_name == "run_bash":
+                        tool_call["args"] = {"command": args_str}
+                    elif tool_name == "read_file":
+                        tool_call["args"] = {"filepath": args_str}
+                    elif tool_name == "web_search":
+                        tool_call["args"] = {"query": args_str}
+                    elif tool_name == "ask_deepseek_oracle":
+                        tool_call["args"] = {"query": args_str}
+                    else:
+                        # Fallback for unexpected cases, wrap it in a default key
+                        tool_call["args"] = {"arg": args_str}
+
+                return tool_call
             except json.JSONDecodeError:
                 pass
         return None

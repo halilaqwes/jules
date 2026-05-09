@@ -145,6 +145,10 @@ def register_tool(manager):
                 return await func(**kwargs)
             else:
                 return func(**kwargs)
+        except TypeError as e:
+            if "mapping" in str(e).lower() or "unexpected keyword argument" in str(e).lower() or "missing" in str(e).lower():
+                return f"Error executing tool '{tool_name}': {e}. Ensure 'args' is a JSON object with correct keys matching the tool's required parameters."
+            return f"Error executing tool '{tool_name}': {e}"
         except Exception as e:
             return f"Error executing tool '{tool_name}': {e}"
 

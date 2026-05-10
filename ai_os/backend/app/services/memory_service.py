@@ -9,10 +9,14 @@ DB_PATH = "memory.db"
 class MemoryService:
     def __init__(self, db_path: str = DB_PATH):
         self.db_path = db_path
+        # BOLT OPTIMIZATION: Thread-local database connections
+        # By maintaining a pool of thread-local connections, we eliminate
+        # the overhead of opening/closing the DB per event, while remaining thread-safe.
+        import threading
+        self._local = threading.local()
         self._init_db()
 
-    def _get_conn(self):
-        conn = sqlite3.connect(self.db_path)
+    def _init_conn(self, conn):
         # Attempt to load sqlite-vec if supported by the Python sqlite3 build
         try:
             conn.enable_load_extension(True)
@@ -21,7 +25,14 @@ class MemoryService:
         except AttributeError:
             pass # fallback to plain sqlite3 if extensions aren't supported
         conn.row_factory = sqlite3.Row
-        return conn
+
+    def _get_conn(self):
+        if not hasattr(self._local, 'conn'):
+            self._local.conn = sqlite3.connect(self.db_path)
+            self._init_conn(self._local.conn)
+            self._local.conn.execute('PRAGMA journal_mode = WAL;')
+            self._local.conn.execute('PRAGMA synchronous = NORMAL;')
+        return self._local.conn
 
     def _init_db(self):
         conn = self._get_conn()
@@ -51,7 +62,6 @@ class MemoryService:
         # For simplicity in this demo, we'll store memory as text.
 
         conn.commit()
-        conn.close()
 
     def set_memory(self, key: str, value: Any):
         conn = self._get_conn()
@@ -63,14 +73,12 @@ class MemoryService:
             ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=CURRENT_TIMESTAMP
         ''', (key, val_str))
         conn.commit()
-        conn.close()
 
     def get_memory(self, key: str) -> Optional[str]:
         conn = self._get_conn()
         cursor = conn.cursor()
         cursor.execute('SELECT value FROM system_memory WHERE key = ?', (key,))
         row = cursor.fetchone()
-        conn.close()
         if row:
             try:
                 return json.loads(row['value'])
@@ -86,7 +94,6 @@ class MemoryService:
             VALUES (?, ?, ?)
         ''', (agent_id, event_type, content))
         conn.commit()
-        conn.close()
 
         # Trigger real-time hook if available
         if hasattr(self, 'log_event_hook') and self.log_event_hook:
@@ -102,7 +109,6 @@ class MemoryService:
             ORDER BY id DESC LIMIT ?
         ''', (agent_id, limit))
         rows = cursor.fetchall()
-        conn.close()
         return [dict(row) for row in rows][::-1]
 
 memory_service = MemoryService()

@@ -1,0 +1,15 @@
+
+> frontend@0.0.0 dev
+> concurrently "vite" "wait-on tcp:5173 && electron ."
+
+[0]
+[0]   VITE v8.0.11  ready in 468 ms
+[0]
+[0]   ➜  Local:   http://localhost:5173/
+[0]   ➜  Network: use --host to expose
+[1] Downloading Electron binary...
+[1] [25817:0511/023126.557942:ERROR:ui/ozone/platform/x11/ozone_platform_x11.cc:257] Missing X server or $DISPLAY
+[1] [25817:0511/023126.558040:ERROR:ui/aura/env.cc:246] The platform failed to initialize.  Exiting.
+[1] /app/ai_os/frontend/node_modules/electron/dist/electron exited with signal SIGSEGV
+[1] wait-on tcp:5173 && electron . exited with code 1
+[0] 2:38:36 AM [vite] (client) hmr update /src/components/layout/MainLayout.tsx, /src/index.css

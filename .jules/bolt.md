@@ -1,0 +1,3 @@
+## 2024-05-12 - [Memoizing Sibling Components in React Layouts]
+**Learning:** In a typical React layout where complex or heavy components (like a Sidebar, Explorer, and Chat Panel) are rendered as siblings to a text editor component, lifting the code content state up to the layout (`MainLayout`) can cause significant layout thrashing. Because state changes on every keystroke, the entire `MainLayout` re-renders, causing all heavy sibling components to reconcile unnecessarily.
+**Action:** When a high-frequency state (like keystrokes in a `CodeEditor`) must be lifted to a central parent, use `useMemo` to memoize the rendered elements of heavy sibling components that don't depend on that high-frequency state, and use `useCallback` for any event handlers passed to them.

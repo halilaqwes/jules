@@ -30,6 +30,7 @@ function AgentLogs() {
 export function AgentSidebar() {
     const { isConnected, socket } = useSocket();
     const [goal, setGoal] = useState('');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [models, setModels] = useState<any[]>([]);
     const [selectedModel, setSelectedModel] = useState('');
 

@@ -1,0 +1,3 @@
+## 2024-05-17 - React State Tracking in Layout Components
+**Learning:** In the frontend React application, lifting state up to a central layout component (like tracking `CodeEditor` keystrokes in `MainLayout`) causes severe layout thrashing and unnecessary reconciliation because heavy sibling components (`AgentSidebar`, `FileExplorer`, `ChatPanel`) re-render on every keystroke.
+**Action:** When centralizing frequent state updates in layout components, heavy sibling components must be aggressively memoized using `useMemo`, and callback props must be wrapped in `useCallback` to prevent breaking child component memoization.

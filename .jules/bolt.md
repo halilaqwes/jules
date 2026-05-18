@@ -1,0 +1,3 @@
+## 2023-10-27 - React re-rendering issue with lifted state
+**Learning:** In a React application, when state is lifted up to a parent component (like `CodeEditor` keystrokes tracked in `MainLayout`), updating that state triggers re-renders for all unmemoized sibling components. In our case, every keystroke in the code editor caused `AgentSidebar`, `FileExplorer`, and `ChatPanel` to re-render, leading to layout thrashing and wasted render cycles.
+**Action:** When lifting rapidly changing state (like keystrokes or mouse positions) to a central layout component, always ensure that heavy sibling components are memoized (e.g., using `React.memo()`) and that the event handlers passed to them are memoized using `useCallback()` to prevent severe performance bottlenecks.

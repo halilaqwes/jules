@@ -1,0 +1,3 @@
+## 2024-05-19 - Lifting State Up Requires Component Memoization
+**Learning:** In the frontend React application, lifting state up to a central layout component (`MainLayout`) requires heavy sibling components to be memoized using `React.memo` and `useCallback` to prevent severe layout thrashing and unnecessary reconciliation.
+**Action:** When updating central states (like `activeFile` and `code`), explicitly wrap heavy components (`FileExplorer`, `CodeEditor`, `AgentSidebar`, `ChatPanel`) with `React.memo` and use `useCallback` for functions passed as props to avoid full application re-renders.

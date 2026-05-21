@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { useSocket } from '../../services/socket';
 import { Play, Settings, Terminal, Activity } from 'lucide-react';
 
@@ -27,9 +27,10 @@ function AgentLogs() {
     );
 }
 
-export function AgentSidebar() {
+export const AgentSidebar = memo(function AgentSidebar() {
     const { isConnected, socket } = useSocket();
     const [goal, setGoal] = useState('');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [models, setModels] = useState<any[]>([]);
     const [selectedModel, setSelectedModel] = useState('');
 
@@ -102,4 +103,4 @@ export function AgentSidebar() {
             </div>
         </div>
     );
-}
+});

@@ -1,0 +1,3 @@
+## 2024-06-25 - Prevent Prop-Drilling Renders with useCallback and React.memo
+**Learning:** In a heavily componentized React layout (like `MainLayout` wrapping `CodeEditor`, `AgentSidebar`, `FileExplorer`, and `ChatPanel`), keeping state such as active code keystrokes in the top level component causes massive unneeded layout thrashing across all sibling components if they aren't properly memoized.
+**Action:** When holding highly volatile state (like active editor text/keystrokes) at a layout/parent component level, strictly memoize sibling components using `React.memo` and strictly use `useCallback` for their passed event handlers to prevent catastrophic layout rerendering on every keystroke.

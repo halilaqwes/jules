@@ -8,8 +8,6 @@ interface FileNode {
     children?: FileNode[];
 }
 
-// ⚡ Bolt: Use React.memo so the FileExplorer doesn't re-render
-// when the parent MainLayout state changes (like CodeEditor keystrokes)
 export const FileExplorer = memo(function FileExplorer({ onFileSelect }: { onFileSelect: (path: string, content: string) => void }) {
     const [tree, setTree] = useState<FileNode[]>([]);
     const [expanded, setExpanded] = useState<Record<string, boolean>>({});

@@ -31,8 +31,6 @@ interface AIModel {
     name: string;
 }
 
-// ⚡ Bolt: Use React.memo so the AgentSidebar doesn't re-render
-// when the parent MainLayout state changes (like CodeEditor keystrokes)
 export const AgentSidebar = memo(function AgentSidebar() {
     const { isConnected, socket } = useSocket();
     const [goal, setGoal] = useState('');

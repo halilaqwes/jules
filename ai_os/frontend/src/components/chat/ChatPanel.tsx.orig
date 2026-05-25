@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, memo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSocket } from '../../services/socket';
 import { Send, Bot, User, Loader } from 'lucide-react';
 
@@ -7,9 +7,7 @@ interface ChatMessage {
     content: string;
 }
 
-// ⚡ Bolt: Use React.memo so the ChatPanel doesn't re-render
-// when the parent MainLayout state changes (like CodeEditor keystrokes)
-export const ChatPanel = memo(function ChatPanel({ selectedModel }: { selectedModel: string }) {
+export function ChatPanel({ selectedModel }: { selectedModel: string }) {
     const { isConnected, socket } = useSocket();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
@@ -114,4 +112,4 @@ export const ChatPanel = memo(function ChatPanel({ selectedModel }: { selectedMo
             </div>
         </div>
     );
-});
+}

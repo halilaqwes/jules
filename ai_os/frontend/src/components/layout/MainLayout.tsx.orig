@@ -23,8 +23,6 @@ export function MainLayout() {
             .catch(err => console.error(err));
     }, []);
 
-    // ⚡ Bolt: Memoize file selection callback to prevent FileExplorer re-renders
-    // when the editor state (code) changes on every keystroke.
     const handleFileSelect = useCallback((path: string, content: string) => {
         setActiveFile(path);
         setCode(content);

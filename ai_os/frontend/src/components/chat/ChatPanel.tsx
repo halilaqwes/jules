@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSocket } from '../../services/socket';
 import { Send, Bot, User, Loader } from 'lucide-react';
 
@@ -7,7 +7,7 @@ interface ChatMessage {
     content: string;
 }
 
-export function ChatPanel({ selectedModel }: { selectedModel: string }) {
+export const ChatPanel = React.memo(function ChatPanel({ selectedModel }: { selectedModel: string }) {
     const { isConnected, socket } = useSocket();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
@@ -45,6 +45,7 @@ export function ChatPanel({ selectedModel }: { selectedModel: string }) {
         socket.emit('chat_message', { message: text, model: selectedModel });
     };
 
+    // React.memo optimization: Prevents unnecessary re-renders when parent layout state updates
     return (
         <div className="flex flex-col h-full w-96 bg-[#18181b] border-l border-gray-800 text-gray-300">
             <div className="p-3 border-b border-gray-800 flex items-center justify-between bg-[#1e1e2e]">
@@ -112,4 +113,4 @@ export function ChatPanel({ selectedModel }: { selectedModel: string }) {
             </div>
         </div>
     );
-}
+});

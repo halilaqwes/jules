@@ -1,0 +1,3 @@
+## 2024-05-27 - Central State Layout Thrashing
+**Learning:** In a React application, lifting state up to a central layout component (like tracking CodeEditor keystrokes in MainLayout) can lead to severe layout thrashing and unnecessary reconciliation for sibling components without proper memoization. This is particularly problematic with heavy components like Monaco editor or those maintaining WebSocket connections.
+**Action:** Always use React.memo (or memo) for heavy sibling components and useCallback for callbacks passed to them when centralizing frequently updated state to prevent unnecessary re-renders.

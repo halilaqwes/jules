@@ -1,0 +1,3 @@
+## 2023-10-24 - React MainLayout re-renders caused by lifting state up
+**Learning:** In a React application, if you lift state (like `code` from the Code Editor) to a parent component (`MainLayout`) and pass it down, every keystroke causes a re-render of the parent. If sibling components (`AgentSidebar`, `FileExplorer`, `ChatPanel`) are heavy and not memoized, they will all re-render on every single keystroke. This causes severe layout thrashing and input latency.
+**Action:** Always wrap heavy sibling components in `React.memo` and use `useCallback` for event handlers passed as props when the parent contains frequently updating state (like an uncontrolled/controlled code editor input) to avoid unnecessary reconciliation passes.

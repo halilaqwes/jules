@@ -1,0 +1,3 @@
+## 2024-06-01 - React Keystroke Thrashing in Central Layout
+**Learning:** In React applications with a central layout component, lifting frequent state updates (like tracking keystrokes from a code editor) up to the shared ancestor causes severe layout thrashing. Without sibling memoization, every keystroke forces heavy adjacent components (like sidebars and explorers) to fully re-render.
+**Action:** When placing a CodeEditor alongside complex siblings in a layout, wrap sibling components with `React.memo` and use `useCallback` for their props to preserve referential equality and prevent unnecessary renders.

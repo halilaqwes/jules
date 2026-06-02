@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Folder, FileCode, File, ChevronRight, ChevronDown } from 'lucide-react';
 
 interface FileNode {
@@ -8,21 +8,20 @@ interface FileNode {
     children?: FileNode[];
 }
 
-export function FileExplorer({ onFileSelect }: { onFileSelect: (path: string, content: string) => void }) {
+export const FileExplorer = React.memo(function FileExplorer({ onFileSelect }: { onFileSelect: (path: string, content: string) => void }) {
     const [tree, setTree] = useState<FileNode[]>([]);
     const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
-    const fetchTree = async () => {
-        try {
-            const res = await fetch('http://localhost:8000/api/files');
-            const data = await res.json();
-            setTree(data.tree || []);
-        } catch (e) {
-            console.error(e);
-        }
-    };
-
     useEffect(() => {
+        const fetchTree = async () => {
+            try {
+                const res = await fetch('http://localhost:8000/api/files');
+                const data = await res.json();
+                setTree(data.tree || []);
+            } catch (e) {
+                console.error(e);
+            }
+        };
         fetchTree();
         const interval = setInterval(fetchTree, 5000); // refresh every 5s
         return () => clearInterval(interval);
@@ -88,4 +87,4 @@ export function FileExplorer({ onFileSelect }: { onFileSelect: (path: string, co
             </div>
         </div>
     );
-}
+});

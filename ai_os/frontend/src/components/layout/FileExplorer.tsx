@@ -23,6 +23,7 @@ export function FileExplorer({ onFileSelect }: { onFileSelect: (path: string, co
     };
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         fetchTree();
         const interval = setInterval(fetchTree, 5000); // refresh every 5s
         return () => clearInterval(interval);

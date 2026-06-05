@@ -1,0 +1,3 @@
+## 2024-06-05 - Optimize React state lifted to MainLayout
+**Learning:** In the frontend React application, lifting state up to a central layout component (like tracking `CodeEditor` keystrokes in `MainLayout`) without memoizing sibling components causes severe layout thrashing and unnecessary reconciliation.
+**Action:** When tracking highly frequent state changes (like keystrokes) in a parent layout component, always use `useCallback` for functions passed as props and wrap heavy sibling components (like `AgentSidebar`, `ChatPanel`, and `FileExplorer`) in `React.memo` to prevent unnecessary re-renders.

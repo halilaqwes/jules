@@ -1,4 +1,5 @@
 import Editor from '@monaco-editor/react';
+import React from 'react';
 
 interface CodeEditorProps {
     fileContent: string;
@@ -6,7 +7,8 @@ interface CodeEditorProps {
     onChange?: (value: string | undefined) => void;
 }
 
-export function CodeEditor({ fileContent, language = 'python', onChange }: CodeEditorProps) {
+// ⚡ Bolt Performance Optimization: Added React.memo to prevent unnecessary re-renders when MainLayout state changes
+export const CodeEditor = React.memo(function CodeEditor({ fileContent, language = 'python', onChange }: CodeEditorProps) {
     return (
         <div className="h-full w-full bg-[#1e1e1e]">
             <Editor
@@ -24,4 +26,4 @@ export function CodeEditor({ fileContent, language = 'python', onChange }: CodeE
             />
         </div>
     );
-}
+});

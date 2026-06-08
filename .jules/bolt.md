@@ -1,0 +1,3 @@
+## 2024-05-18 - [Lifted State Re-render Anti-Pattern]
+**Learning:** Lifting code editor state up to a central layout component (`MainLayout`) causes heavy sibling components (`AgentSidebar`, `FileExplorer`, `ChatPanel`) to re-render on every keystroke, leading to layout thrashing.
+**Action:** Always memoize heavy sibling components with `React.memo` or `useMemo` and event handlers with `useCallback` when lifting rapidly changing state (like editor inputs) to a common ancestor.

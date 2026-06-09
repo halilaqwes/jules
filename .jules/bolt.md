@@ -1,0 +1,3 @@
+## 2024-06-09 - [Prevent Unnecessary Re-renders in React Layouts]
+**Learning:** Lifting state up to a central layout component (like `MainLayout` tracking `CodeEditor` keystrokes) causes every keystroke to trigger a full re-render. Without memoization, this propagates to heavy sibling components (`AgentSidebar`, `FileExplorer`, `ChatPanel`), leading to severe layout thrashing and UI lag.
+**Action:** When tracking high-frequency state (like editor inputs) in a top-level layout, always wrap static or heavy sibling components with `React.memo` and wrap the handlers passed to them in `useCallback` to maintain reference equality and avoid unnecessary rendering.

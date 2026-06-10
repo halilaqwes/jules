@@ -1,0 +1,3 @@
+## 2025-06-10 - Memoizing heavy sibling components in layout state lifts
+**Learning:** In the frontend React application, lifting state up to a central layout component (like tracking `CodeEditor` keystrokes in `MainLayout`) requires heavy sibling components (`AgentSidebar`, `FileExplorer`, `ChatPanel`) to be memoized using `React.memo` or `useMemo`, and callbacks to be memoized using `useCallback`. Otherwise, keystrokes trigger unnecessary re-renders of the entire layout, causing severe UI thrashing and performance degradation.
+**Action:** Always wrap large sibling layout panels with `React.memo()` and use `useCallback` for event handlers passed as props when lifting rapidly-changing state (like typing in an editor) up to a parent component.

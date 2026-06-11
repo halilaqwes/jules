@@ -1,6 +1,10 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSocket } from '../../services/socket';
 import { Play, Settings, Terminal, Activity } from 'lucide-react';
+
+interface AIModel {
+    name: string;
+}
 
 function AgentLogs() {
     const [logs, setLogs] = useState<string[]>([]);
@@ -27,10 +31,12 @@ function AgentLogs() {
     );
 }
 
-export function AgentSidebar() {
+// Wrapped in React.memo to prevent unnecessary re-renders when
+// the MainLayout state updates (e.g. from CodeEditor keystrokes).
+export const AgentSidebar = React.memo(function AgentSidebar() {
     const { isConnected, socket } = useSocket();
     const [goal, setGoal] = useState('');
-    const [models, setModels] = useState<any[]>([]);
+    const [models, setModels] = useState<AIModel[]>([]);
     const [selectedModel, setSelectedModel] = useState('');
 
     useEffect(() => {
@@ -102,4 +108,4 @@ export function AgentSidebar() {
             </div>
         </div>
     );
-}
+});

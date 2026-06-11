@@ -1,0 +1,4 @@
+
+## 2024-05-18 - [Lifting State in MainLayout Causes Sibling Render Thrashing]
+**Learning:** In the frontend architecture, `MainLayout` tracks the `CodeEditor` value (`code`) as state. Because `CodeEditor` fires an `onChange` on every single keystroke, `MainLayout` re-renders constantly. Any heavy sibling component inside `MainLayout` (like `AgentSidebar`, `FileExplorer`, or `ChatPanel`) will thus synchronously re-render on every keystroke, severely blocking the main thread and degrading typing performance.
+**Action:** When a parent component manages frequently updated state (like editor keystrokes), always wrap its large, static sibling components in `React.memo()`, and use `useCallback()` to memoize any event handlers passed down to them, thereby severing the unnecessary re-render chain.

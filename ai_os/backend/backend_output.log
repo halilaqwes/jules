@@ -1,0 +1,21 @@
+INFO:     Started server process [78188]
+INFO:     Waiting for application startup.
+Downloading skills repository...
+Extracting...
+Successfully bundled 1516 skills.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+Running skill downloader...
+Orchestrator Agent started 24/7 loop.
+INFO:     127.0.0.1:40298 - "GET /socket.io/?EIO=4&transport=polling&t=b6sl12zm HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:40312 - "GET /api/files HTTP/1.1" 200 OK
+Error fetching models: All connection attempts failed
+INFO:     127.0.0.1:40298 - "GET /api/models HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40322 - "GET /api/files HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40312 - "GET /socket.io/?EIO=4&transport=polling&t=b6tgc6dn HTTP/1.1" 404 Not Found
+Error fetching models: All connection attempts failed
+INFO:     127.0.0.1:40332 - "GET /api/models HTTP/1.1" 200 OK
+Error fetching models: All connection attempts failed
+INFO:     127.0.0.1:40312 - "GET /api/models HTTP/1.1" 200 OK
+Error fetching models: All connection attempts failed
+INFO:     127.0.0.1:40332 - "GET /api/models HTTP/1.1" 200 OK

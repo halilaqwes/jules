@@ -6,3 +6,7 @@ __pycache__/
 .DS_Store
 dist/
 ai_os/backend/app/skills/data/
+node_modules/
+venv/
+ai_os/backend/extracted_skills/
+ai_os/backend/skills/

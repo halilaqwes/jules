@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Folder, FileCode, File, ChevronRight, ChevronDown } from 'lucide-react';
 
 interface FileNode {
@@ -8,7 +8,8 @@ interface FileNode {
     children?: FileNode[];
 }
 
-export function FileExplorer({ onFileSelect }: { onFileSelect: (path: string, content: string) => void }) {
+// ⚡ Bolt: Memoized FileExplorer to prevent re-renders when parent MainLayout state updates (e.g. typing in code editor).
+export const FileExplorer = React.memo(function FileExplorer({ onFileSelect }: { onFileSelect: (path: string, content: string) => void }) {
     const [tree, setTree] = useState<FileNode[]>([]);
     const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
@@ -23,7 +24,8 @@ export function FileExplorer({ onFileSelect }: { onFileSelect: (path: string, co
     };
 
     useEffect(() => {
-        fetchTree();
+        // ⚡ Bolt: Wrapped in setTimeout to push the state update to the macro-task queue and avoid synchronous setState warnings per memory.
+        setTimeout(() => fetchTree(), 0);
         const interval = setInterval(fetchTree, 5000); // refresh every 5s
         return () => clearInterval(interval);
     }, []);
@@ -88,4 +90,4 @@ export function FileExplorer({ onFileSelect }: { onFileSelect: (path: string, co
             </div>
         </div>
     );
-}
+});

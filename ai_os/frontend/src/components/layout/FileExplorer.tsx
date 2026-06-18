@@ -23,7 +23,7 @@ export function FileExplorer({ onFileSelect }: { onFileSelect: (path: string, co
     };
 
     useEffect(() => {
-        fetchTree();
+        setTimeout(fetchTree, 0);
         const interval = setInterval(fetchTree, 5000); // refresh every 5s
         return () => clearInterval(interval);
     }, []);

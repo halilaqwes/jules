@@ -1,0 +1,3 @@
+## 2023-10-27 - [Memoize Layout Components to Prevent Layout Thrashing]
+**Learning:** In the frontend React application, lifting state up to a central layout component (like tracking `CodeEditor` keystrokes in `MainLayout`) requires heavy sibling components to be memoized using `React.memo` or `useMemo`, and callbacks using `useCallback` to prevent severe layout thrashing and unnecessary reconciliation.
+**Action:** When adding state to layout components that changes frequently (e.g., text input), always memoize stable child components that do not depend on that state to prevent full-page re-renders.

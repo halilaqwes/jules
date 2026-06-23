@@ -1,0 +1,3 @@
+## 2024-05-18 - Memoizing Heavy Siblings to Prevent Layout Thrashing
+**Learning:** In the frontend React application, lifting state up to `MainLayout` (like the editor's `code` state) causes all sibling components (`AgentSidebar`, `ChatPanel`, `FileExplorer`) to re-render synchronously on every single keystroke. Given that these components contain complex UI and socket connections, this results in severe layout thrashing and input lag.
+**Action:** When tracking frequent state updates (like keystrokes) in a central layout component, aggressively use `React.memo` on all heavy sibling components and `useCallback` for their prop handlers to prevent unnecessary reconciliation.

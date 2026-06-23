@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSocket } from '../../services/socket';
 import { Play, Settings, Terminal, Activity } from 'lucide-react';
 
@@ -27,10 +27,16 @@ function AgentLogs() {
     );
 }
 
-export function AgentSidebar() {
+// ⚡ BOLT OPTIMIZATION: Memoize AgentSidebar to prevent unnecessary re-renders when parent state (like editor code) changes
+interface ModelInfo {
+    name: string;
+    [key: string]: unknown;
+}
+
+export const AgentSidebar = React.memo(function AgentSidebar() {
     const { isConnected, socket } = useSocket();
     const [goal, setGoal] = useState('');
-    const [models, setModels] = useState<any[]>([]);
+    const [models, setModels] = useState<ModelInfo[]>([]);
     const [selectedModel, setSelectedModel] = useState('');
 
     useEffect(() => {
@@ -102,4 +108,4 @@ export function AgentSidebar() {
             </div>
         </div>
     );
-}
+});

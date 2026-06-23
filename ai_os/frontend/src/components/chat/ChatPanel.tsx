@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSocket } from '../../services/socket';
 import { Send, Bot, User, Loader } from 'lucide-react';
 
@@ -7,7 +7,8 @@ interface ChatMessage {
     content: string;
 }
 
-export function ChatPanel({ selectedModel }: { selectedModel: string }) {
+// ⚡ BOLT OPTIMIZATION: Memoize ChatPanel to prevent it from re-rendering when parent MainLayout state (e.g. code editing) updates
+export const ChatPanel = React.memo(function ChatPanel({ selectedModel }: { selectedModel: string }) {
     const { isConnected, socket } = useSocket();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
@@ -112,4 +113,4 @@ export function ChatPanel({ selectedModel }: { selectedModel: string }) {
             </div>
         </div>
     );
-}
+});

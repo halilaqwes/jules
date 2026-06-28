@@ -1,0 +1,3 @@
+## 2024-05-18 - React.memo and useCallback for Lifting State
+**Learning:** When a React application has heavy sibling components (like Monaco Editor, chat interfaces, and complex sidebars) and state is lifted up to a central layout component to track frequent events like keystrokes (`onChange` in `CodeEditor` updating state in `MainLayout`), it triggers severe layout thrashing because all siblings re-render on every keystroke by default.
+**Action:** Always wrap heavy sibling components in `React.memo` and strictly memoize all callback functions passed to them using `useCallback` (at the top level of the parent component, following Rules of Hooks) to break the re-render chain and ensure smooth performance during high-frequency state updates.

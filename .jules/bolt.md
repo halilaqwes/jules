@@ -1,0 +1,3 @@
+## 2024-05-18 - [Optimize React MainLayout State Uplift]
+**Learning:** In the frontend React application, lifting state up to a central layout component (`MainLayout`) tracking `CodeEditor` keystrokes requires heavy sibling components (`AgentSidebar`, `FileExplorer`, `ChatPanel`) to be memoized using `React.memo` and callbacks extracted using `useCallback`. Failure to do so leads to severe layout thrashing and unnecessary reconciliation on every keystroke.
+**Action:** Always memoize heavy sibling components and provide stable callback references using `useCallback` when state is lifted to a common ancestor to track high-frequency events like text input.

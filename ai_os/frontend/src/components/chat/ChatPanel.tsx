@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSocket } from '../../services/socket';
 import { Send, Bot, User, Loader } from 'lucide-react';
 
@@ -7,7 +7,7 @@ interface ChatMessage {
     content: string;
 }
 
-export function ChatPanel({ selectedModel }: { selectedModel: string }) {
+function ChatPanelComponent({ selectedModel }: { selectedModel: string }) {
     const { isConnected, socket } = useSocket();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
@@ -113,3 +113,5 @@ export function ChatPanel({ selectedModel }: { selectedModel: string }) {
         </div>
     );
 }
+
+export const ChatPanel = React.memo(ChatPanelComponent);

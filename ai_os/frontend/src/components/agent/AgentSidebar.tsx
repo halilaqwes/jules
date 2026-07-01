@@ -27,10 +27,13 @@ function AgentLogs() {
     );
 }
 
-export function AgentSidebar() {
+import React from 'react';
+
+// ⚡ Bolt: Wrapped in React.memo to prevent unnecessary re-renders when MainLayout state updates.
+export const AgentSidebar = React.memo(function AgentSidebar() {
     const { isConnected, socket } = useSocket();
     const [goal, setGoal] = useState('');
-    const [models, setModels] = useState<any[]>([]);
+    const [models, setModels] = useState<{name: string}[]>([]);
     const [selectedModel, setSelectedModel] = useState('');
 
     useEffect(() => {
@@ -102,4 +105,4 @@ export function AgentSidebar() {
             </div>
         </div>
     );
-}
+});

@@ -2,7 +2,7 @@ import { AgentSidebar } from '../agent/AgentSidebar';
 import { CodeEditor } from '../editor/CodeEditor';
 import { ChatPanel } from '../chat/ChatPanel';
 import { FileExplorer } from './FileExplorer';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export function MainLayout() {
     const [code, setCode] = useState<string>('# Welcome to AI OS\n# Select a file or ask the agent to write code.');
@@ -26,11 +26,12 @@ export function MainLayout() {
     return (
         <div className="flex h-screen w-screen bg-black overflow-hidden font-sans">
             <AgentSidebar />
+            {/* ⚡ Bolt: Wrapped in useCallback to prevent FileExplorer re-renders on keystrokes. Impact: Avoids full layout re-renders on every keystroke. */}
             <FileExplorer
-                onFileSelect={(path, content) => {
+                onFileSelect={useCallback((path: string, content: string) => {
                     setActiveFile(path);
                     setCode(content);
-                }}
+                }, [])}
             />
             <div className="flex-1 flex flex-col min-w-0 border-r border-gray-800">
                 <div className="h-10 bg-[#1e1e1e] border-b border-gray-800 flex items-center px-4 text-xs text-gray-400">

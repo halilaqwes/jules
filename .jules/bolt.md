@@ -1,0 +1,3 @@
+## 2026-07-04 - [React Layout Re-render Thrashing]
+**Learning:** Adding `setTimeout` inside `useEffect` is an anti-pattern and does not improve performance; it merely delays state changes and bypasses lint rules unnecessarily. Also, when lifting state (like editor 'code') to a root layout, heavy sibling components will re-render on every keystroke unless properly memoized with `useMemo` and `useCallback`.
+**Action:** Use `useMemo` for memoizing sibling components in high-frequency state-lifted parent components to prevent unnecessary re-renders. Avoid `setTimeout` inside `useEffect` unless explicitly needed to yield to the browser or handle race conditions.

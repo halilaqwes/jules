@@ -27,10 +27,14 @@ function AgentLogs() {
     );
 }
 
+interface ModelInfo {
+    name: string;
+}
+
 export function AgentSidebar() {
     const { isConnected, socket } = useSocket();
     const [goal, setGoal] = useState('');
-    const [models, setModels] = useState<any[]>([]);
+    const [models, setModels] = useState<ModelInfo[]>([]);
     const [selectedModel, setSelectedModel] = useState('');
 
     useEffect(() => {

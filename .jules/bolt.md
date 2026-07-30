@@ -1,0 +1,3 @@
+## 2024-11-20 - Memoizing siblings in a central layout
+**Learning:** When state is lifted up to a central layout component (like `MainLayout` holding `code` state from `CodeEditor`), keystrokes will cause the entire layout to re-render. If heavy sibling components (like sidebars and explorers) aren't memoized, it results in severe layout thrashing and React reconciliation overhead.
+**Action:** Always wrap heavy sibling components in `React.memo` and strictly use `useCallback` for functions passed down as props to avoid inline function regeneration, ensuring re-renders are localized only to the components actively depending on that state.

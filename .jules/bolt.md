@@ -1,0 +1,3 @@
+## 2024-05-24 - React MainLayout Thrashing on Keystrokes
+**Learning:** In a monolithic layout component where local state is updated on every keystroke (like `code` updated via `onChange` in an Editor component), all sibling components re-render on every keystroke unless they are memoized. This creates massive UI thrashing when typing.
+**Action:** When lifting state up to a layout component that updates frequently, heavily utilize `useCallback` for event handlers passed as props and wrap heavy child components with `useMemo` (or `React.memo`) to prevent them from re-rendering unnecessarily when irrelevant state updates occur.

@@ -1,0 +1,3 @@
+## 2024-08-01 - [Prevent Layout Thrashing with React.memo and useCallback]
+**Learning:** In the frontend React application, lifting state up to a central layout component (like tracking `CodeEditor` keystrokes in `MainLayout`) causes severe layout thrashing and unnecessary reconciliation for sibling components (like AgentSidebar, FileExplorer, ChatPanel) on every keystroke if they are not memoized.
+**Action:** Always wrap heavy sibling components in `React.memo` and use `useCallback` for their event handlers when sharing state at a top-level layout component to prevent performance bottlenecks during rapid state updates (e.g., typing).

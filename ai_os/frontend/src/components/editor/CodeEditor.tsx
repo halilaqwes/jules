@@ -1,4 +1,5 @@
 import Editor from '@monaco-editor/react';
+import { memo } from 'react';
 
 interface CodeEditorProps {
     fileContent: string;
@@ -6,7 +7,7 @@ interface CodeEditorProps {
     onChange?: (value: string | undefined) => void;
 }
 
-export function CodeEditor({ fileContent, language = 'python', onChange }: CodeEditorProps) {
+export const CodeEditor = memo(function CodeEditor({ fileContent, language = 'python', onChange }: CodeEditorProps) {
     return (
         <div className="h-full w-full bg-[#1e1e1e]">
             <Editor
@@ -24,4 +25,4 @@ export function CodeEditor({ fileContent, language = 'python', onChange }: CodeE
             />
         </div>
     );
-}
+});

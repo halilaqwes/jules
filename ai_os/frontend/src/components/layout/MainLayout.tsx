@@ -2,7 +2,7 @@ import { AgentSidebar } from '../agent/AgentSidebar';
 import { CodeEditor } from '../editor/CodeEditor';
 import { ChatPanel } from '../chat/ChatPanel';
 import { FileExplorer } from './FileExplorer';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 export function MainLayout() {
     const [code, setCode] = useState<string>('# Welcome to AI OS\n# Select a file or ask the agent to write code.');
@@ -25,19 +25,21 @@ export function MainLayout() {
 
     return (
         <div className="flex h-screen w-screen bg-black overflow-hidden font-sans">
+            {/* Memoized heavy components to prevent unnecessary re-renders during CodeEditor typing */}
             <AgentSidebar />
             <FileExplorer
-                onFileSelect={(path, content) => {
+                onFileSelect={useCallback((path: string, content: string) => {
                     setActiveFile(path);
                     setCode(content);
-                }}
+                }, [])}
             />
             <div className="flex-1 flex flex-col min-w-0 border-r border-gray-800">
                 <div className="h-10 bg-[#1e1e1e] border-b border-gray-800 flex items-center px-4 text-xs text-gray-400">
                     <span>{activeFile}</span>
                 </div>
                 <div className="flex-1 relative">
-                    <CodeEditor fileContent={code} onChange={(v) => setCode(v || '')} />
+                    {/* Memoized onChange callback to preserve component identity */}
+                    <CodeEditor fileContent={code} onChange={useCallback((v: string | undefined) => setCode(v || ''), [])} />
                 </div>
             </div>
             <ChatPanel selectedModel={selectedModel} />

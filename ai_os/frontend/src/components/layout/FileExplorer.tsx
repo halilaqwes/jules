@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { Folder, FileCode, File, ChevronRight, ChevronDown } from 'lucide-react';
 
 interface FileNode {
@@ -8,7 +8,9 @@ interface FileNode {
     children?: FileNode[];
 }
 
-export function FileExplorer({ onFileSelect }: { onFileSelect: (path: string, content: string) => void }) {
+// ⚡ Bolt: Wrapped in React.memo() to prevent unnecessary re-renders
+// when the parent MainLayout's state (e.g. editor keystrokes) changes.
+export const FileExplorer = memo(function FileExplorer({ onFileSelect }: { onFileSelect: (path: string, content: string) => void }) {
     const [tree, setTree] = useState<FileNode[]>([]);
     const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
@@ -88,4 +90,4 @@ export function FileExplorer({ onFileSelect }: { onFileSelect: (path: string, co
             </div>
         </div>
     );
-}
+});

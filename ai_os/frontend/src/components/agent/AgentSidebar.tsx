@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { useSocket } from '../../services/socket';
 import { Play, Settings, Terminal, Activity } from 'lucide-react';
 
@@ -27,10 +27,12 @@ function AgentLogs() {
     );
 }
 
-export function AgentSidebar() {
+// ⚡ Bolt: Wrapped in React.memo() to prevent unnecessary re-renders
+// when the parent MainLayout's state (e.g. editor keystrokes) changes.
+export const AgentSidebar = memo(function AgentSidebar() {
     const { isConnected, socket } = useSocket();
     const [goal, setGoal] = useState('');
-    const [models, setModels] = useState<any[]>([]);
+    const [models, setModels] = useState<{ name: string }[]>([]);
     const [selectedModel, setSelectedModel] = useState('');
 
     useEffect(() => {
@@ -102,4 +104,4 @@ export function AgentSidebar() {
             </div>
         </div>
     );
-}
+});
